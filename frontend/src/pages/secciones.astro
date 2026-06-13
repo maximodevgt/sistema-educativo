@@ -1,0 +1,202 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Secciones · Sistema Educativo" active="secciones">
+  <span slot="title">Secciones</span>
+
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg font-bold text-navy-800">Secciones</h2>
+      <p class="text-sm text-navy-500"><span id="contador">0</span> secciones registradas</p>
+    </div>
+    <button id="btn-nuevo" class="flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
+      <i class="fa-solid fa-plus"></i>
+      Nueva sección
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border border-navy-100 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
+        <tr>
+          <th class="px-4 py-3 font-semibold">Grado</th>
+          <th class="px-4 py-3 font-semibold">Sección</th>
+          <th class="px-4 py-3 font-semibold">Ciclo</th>
+          <th class="px-4 py-3 font-semibold">Maestro guía</th>
+          <th class="px-4 py-3 font-semibold text-center">Alumnos</th>
+          <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla" class="divide-y divide-navy-100"></tbody>
+    </table>
+    <div id="vacio" class="hidden px-4 py-12 text-center text-navy-400">
+      <i class="fa-solid fa-layer-group mb-2 text-3xl"></i>
+      <p class="text-sm">Aún no hay secciones. Crea la primera.</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-navy-900/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-navy-100 px-6 py-4">
+        <h3 id="modal-titulo" class="text-base font-semibold text-navy-800">Nueva sección</h3>
+        <button id="btn-cerrar" class="text-navy-400 transition hover:text-navy-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="form" class="space-y-4 px-6 py-5">
+        <input type="hidden" id="f-id" />
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Grado</label>
+            <select id="f-grado" required class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200"></select>
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Sección</label>
+            <input id="f-nombre" type="text" required placeholder="A, B, C..." class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Ciclo escolar</label>
+            <input id="f-ciclo" type="number" required min="2000" max="2100" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Maestro guía</label>
+            <select id="f-maestro" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200"></select>
+          </div>
+        </div>
+
+        <p id="form-error" class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="btn-cancelar" class="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 transition hover:bg-navy-50">Cancelar</button>
+          <button type="submit" class="flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  const API = 'http://localhost:8000/api';
+  const $ = (id) => document.getElementById(id);
+  const modal = $('modal');
+
+  let grados = [];
+  let maestros = [];
+
+  async function cargarCatalogos() {
+    [grados, maestros] = await Promise.all([
+      fetch(`${API}/grados`).then((r) => r.json()),
+      fetch(`${API}/maestros`).then((r) => r.json()),
+    ]);
+    $('f-grado').innerHTML =
+      '<option value="">Seleccionar...</option>' +
+      grados.map((g) => `<option value="${g.id}">${g.nombre}</option>`).join('');
+    $('f-maestro').innerHTML =
+      '<option value="">— Sin asignar —</option>' +
+      maestros.map((m) => `<option value="${m.id}">${m.nombres} ${m.apellidos}</option>`).join('');
+  }
+
+  // datos en memoria para editar
+  let secciones = [];
+  async function refrescar() {
+    secciones = await fetch(`${API}/secciones`).then((r) => r.json());
+    pintar();
+  }
+  function pintar() {
+    $('contador').textContent = secciones.length;
+    const tbody = $('tabla');
+    tbody.innerHTML = '';
+    if (secciones.length === 0) { $('vacio').classList.remove('hidden'); return; }
+    $('vacio').classList.add('hidden');
+    for (const s of secciones) {
+      const guia = s.maestro_guia ? `${s.maestro_guia.nombres} ${s.maestro_guia.apellidos}` : '<span class="text-navy-300">Sin asignar</span>';
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-navy-50';
+      tr.innerHTML = `
+        <td class="px-4 py-3 font-medium text-navy-800">${s.grado.nombre}</td>
+        <td class="px-4 py-3"><span class="rounded-md bg-navy-100 px-2 py-0.5 font-semibold text-navy-700">${s.nombre}</span></td>
+        <td class="px-4 py-3 text-navy-600">${s.ciclo}</td>
+        <td class="px-4 py-3 text-navy-600">${guia}</td>
+        <td class="px-4 py-3 text-center text-navy-600">${s.alumnos_count}</td>
+        <td class="px-4 py-3">
+          <div class="flex justify-end gap-1">
+            <button data-accion="editar" data-id="${s.id}" class="flex h-8 w-8 items-center justify-center rounded-lg text-navy-500 transition hover:bg-navy-100 hover:text-navy-700" title="Editar"><i class="fa-solid fa-pen pointer-events-none"></i></button>
+            <button data-accion="eliminar" data-id="${s.id}" class="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 transition hover:bg-rose-50" title="Eliminar"><i class="fa-solid fa-trash pointer-events-none"></i></button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function abrirModal(s = null) {
+    $('form-error').classList.add('hidden');
+    $('form').reset();
+    if (s) {
+      $('modal-titulo').textContent = 'Editar sección';
+      $('f-id').value = s.id;
+      $('f-grado').value = s.grado_id;
+      $('f-nombre').value = s.nombre;
+      $('f-ciclo').value = s.ciclo;
+      $('f-maestro').value = s.maestro_guia_id ?? '';
+    } else {
+      $('modal-titulo').textContent = 'Nueva sección';
+      $('f-id').value = '';
+      $('f-ciclo').value = new Date().getFullYear();
+    }
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  function cerrarModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+  async function guardar(e) {
+    e.preventDefault();
+    $('form-error').classList.add('hidden');
+    const id = $('f-id').value;
+    const datos = {
+      grado_id: Number($('f-grado').value),
+      nombre: $('f-nombre').value,
+      ciclo: Number($('f-ciclo').value),
+      maestro_guia_id: $('f-maestro').value ? Number($('f-maestro').value) : null,
+    };
+    const url = id ? `${API}/secciones/${id}` : `${API}/secciones`;
+    const res = await fetch(url, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(datos),
+    });
+    if (res.ok) { cerrarModal(); refrescar(); }
+    else {
+      const err = await res.json();
+      const msg = err.errors ? Object.values(err.errors).flat().join(' ') : (err.message ?? 'Error al guardar.');
+      $('form-error').textContent = msg;
+      $('form-error').classList.remove('hidden');
+    }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar esta sección?')) return;
+    const res = await fetch(`${API}/secciones/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    if (res.ok) { refrescar(); }
+    else { const err = await res.json(); alert(err.message ?? 'No se pudo eliminar.'); }
+  }
+
+  $('btn-nuevo').addEventListener('click', () => abrirModal());
+  $('btn-cerrar').addEventListener('click', cerrarModal);
+  $('btn-cancelar').addEventListener('click', cerrarModal);
+  $('form').addEventListener('submit', guardar);
+  modal.addEventListener('click', (e) => { if (e.target === modal) cerrarModal(); });
+  $('tabla').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-accion]');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.accion === 'eliminar') eliminar(id);
+    else abrirModal(secciones.find((s) => s.id === id));
+  });
+
+  cargarCatalogos().then(refrescar);
+</script>
