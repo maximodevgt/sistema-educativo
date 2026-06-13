@@ -1,0 +1,187 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Maestros · Sistema Educativo" active="maestros">
+  <span slot="title">Maestros</span>
+
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg font-bold text-navy-800">Maestros</h2>
+      <p class="text-sm text-navy-500"><span id="contador">0</span> maestros registrados</p>
+    </div>
+    <button id="btn-nuevo" class="flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
+      <i class="fa-solid fa-user-plus"></i>
+      Nuevo maestro
+    </button>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border border-navy-100 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
+        <tr>
+          <th class="px-4 py-3 font-semibold">Maestro</th>
+          <th class="px-4 py-3 font-semibold">Correo</th>
+          <th class="px-4 py-3 font-semibold">Teléfono</th>
+          <th class="px-4 py-3 font-semibold text-center">Secciones guía</th>
+          <th class="px-4 py-3 text-right font-semibold">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla" class="divide-y divide-navy-100"></tbody>
+    </table>
+    <div id="vacio" class="hidden px-4 py-12 text-center text-navy-400">
+      <i class="fa-solid fa-chalkboard-user mb-2 text-3xl"></i>
+      <p class="text-sm">Aún no hay maestros. Registra el primero.</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-navy-900/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-navy-100 px-6 py-4">
+        <h3 id="modal-titulo" class="text-base font-semibold text-navy-800">Nuevo maestro</h3>
+        <button id="btn-cerrar" class="text-navy-400 transition hover:text-navy-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="form" class="space-y-4 px-6 py-5">
+        <input type="hidden" id="f-id" />
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Nombres</label>
+            <input id="f-nombres" type="text" required class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium text-navy-700">Apellidos</label>
+            <input id="f-apellidos" type="text" required class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+          </div>
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-navy-700">Correo electrónico</label>
+          <input id="f-email" type="email" placeholder="opcional" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+        </div>
+        <div>
+          <label class="mb-1 block text-sm font-medium text-navy-700">Teléfono</label>
+          <input id="f-telefono" type="text" placeholder="opcional" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
+        </div>
+
+        <p id="form-error" class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" id="btn-cancelar" class="rounded-lg border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 transition hover:bg-navy-50">Cancelar</button>
+          <button type="submit" class="flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  const API = 'http://localhost:8000/api';
+  const $ = (id) => document.getElementById(id);
+  const modal = $('modal');
+
+  let maestros = [];
+
+  function iniciales(n, a) {
+    return ((n?.[0] ?? '') + (a?.[0] ?? '')).toUpperCase();
+  }
+
+  async function refrescar() {
+    maestros = await fetch(`${API}/maestros`).then((r) => r.json());
+    $('contador').textContent = maestros.length;
+    const tbody = $('tabla');
+    tbody.innerHTML = '';
+    if (maestros.length === 0) { $('vacio').classList.remove('hidden'); return; }
+    $('vacio').classList.add('hidden');
+
+    for (const m of maestros) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-navy-50';
+      tr.innerHTML = `
+        <td class="px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-navy-700 text-xs font-bold text-white">${iniciales(m.nombres, m.apellidos)}</div>
+            <span class="font-medium text-navy-800">${m.nombres} ${m.apellidos}</span>
+          </div>
+        </td>
+        <td class="px-4 py-3 text-navy-600">${m.email ?? '<span class="text-navy-300">—</span>'}</td>
+        <td class="px-4 py-3 text-navy-600">${m.telefono ?? '<span class="text-navy-300">—</span>'}</td>
+        <td class="px-4 py-3 text-center text-navy-600">${m.secciones_count}</td>
+        <td class="px-4 py-3">
+          <div class="flex justify-end gap-1">
+            <button data-accion="editar" data-id="${m.id}" class="flex h-8 w-8 items-center justify-center rounded-lg text-navy-500 transition hover:bg-navy-100 hover:text-navy-700" title="Editar"><i class="fa-solid fa-pen pointer-events-none"></i></button>
+            <button data-accion="eliminar" data-id="${m.id}" class="flex h-8 w-8 items-center justify-center rounded-lg text-rose-500 transition hover:bg-rose-50" title="Eliminar"><i class="fa-solid fa-trash pointer-events-none"></i></button>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function abrirModal(m = null) {
+    $('form-error').classList.add('hidden');
+    $('form').reset();
+    if (m) {
+      $('modal-titulo').textContent = 'Editar maestro';
+      $('f-id').value = m.id;
+      $('f-nombres').value = m.nombres;
+      $('f-apellidos').value = m.apellidos;
+      $('f-email').value = m.email ?? '';
+      $('f-telefono').value = m.telefono ?? '';
+    } else {
+      $('modal-titulo').textContent = 'Nuevo maestro';
+      $('f-id').value = '';
+    }
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  function cerrarModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+
+  async function guardar(e) {
+    e.preventDefault();
+    $('form-error').classList.add('hidden');
+    const id = $('f-id').value;
+    const datos = {
+      nombres: $('f-nombres').value,
+      apellidos: $('f-apellidos').value,
+      email: $('f-email').value || null,
+      telefono: $('f-telefono').value || null,
+    };
+    const url = id ? `${API}/maestros/${id}` : `${API}/maestros`;
+    const res = await fetch(url, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(datos),
+    });
+    if (res.ok) { cerrarModal(); refrescar(); }
+    else {
+      const err = await res.json();
+      const msg = err.errors ? Object.values(err.errors).flat().join(' ') : (err.message ?? 'Error al guardar.');
+      $('form-error').textContent = msg;
+      $('form-error').classList.remove('hidden');
+    }
+  }
+
+  async function eliminar(id) {
+    if (!confirm('¿Eliminar este maestro? Quedará desasignado de sus secciones.')) return;
+    const res = await fetch(`${API}/maestros/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    if (res.ok) { refrescar(); }
+    else { const err = await res.json(); alert(err.message ?? 'No se pudo eliminar.'); }
+  }
+
+  $('btn-nuevo').addEventListener('click', () => abrirModal());
+  $('btn-cerrar').addEventListener('click', cerrarModal);
+  $('btn-cancelar').addEventListener('click', cerrarModal);
+  $('form').addEventListener('submit', guardar);
+  modal.addEventListener('click', (e) => { if (e.target === modal) cerrarModal(); });
+  $('tabla').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-accion]');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.accion === 'eliminar') eliminar(id);
+    else abrirModal(maestros.find((m) => m.id === id));
+  });
+
+  refrescar();
+</script>
