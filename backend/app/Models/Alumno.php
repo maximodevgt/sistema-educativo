@@ -23,6 +23,8 @@ class Alumno extends Model
         'fecha_nacimiento' => 'date',
     ];
 
+    protected $appends = ['nombre_completo', 'edad'];
+
     public function seccion(): BelongsTo
     {
         return $this->belongsTo(Seccion::class);
@@ -41,5 +43,10 @@ class Alumno extends Model
     public function getNombreCompletoAttribute(): string
     {
         return "{$this->nombres} {$this->apellidos}";
+    }
+
+    public function getEdadAttribute(): ?int
+    {
+        return $this->fecha_nacimiento?->age;
     }
 }

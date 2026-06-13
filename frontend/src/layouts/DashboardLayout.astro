@@ -1,0 +1,92 @@
+---
+import Layout from './Layout.astro';
+
+interface Props {
+  title?: string;
+  active?: string;
+}
+
+const { title = 'Panel · Sistema Educativo', active = 'inicio' } = Astro.props;
+
+const menu = [
+  { id: 'inicio',        label: 'Inicio',         icon: 'fa-house',            href: '/dashboard' },
+  { id: 'alumnos',       label: 'Alumnos',        icon: 'fa-user-graduate',    href: '/alumnos' },
+  { id: 'notas',         label: 'Notas',          icon: 'fa-clipboard-list',   href: '/notas' },
+  { id: 'comportamiento',label: 'Comportamiento', icon: 'fa-star',             href: '/comportamiento' },
+  { id: 'materias',      label: 'Materias',       icon: 'fa-book',             href: '/materias' },
+  { id: 'secciones',     label: 'Secciones',      icon: 'fa-layer-group',      href: '/secciones' },
+  { id: 'maestros',      label: 'Maestros',       icon: 'fa-chalkboard-user',  href: '/maestros' },
+];
+---
+
+<Layout title={title}>
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="hidden w-64 shrink-0 flex-col bg-navy-800 text-navy-100 md:flex">
+      <div class="flex items-center gap-3 border-b border-navy-700 px-5 py-4">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-white">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            class="h-8 w-8 object-contain"
+            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+          />
+          <i class="fa-solid fa-graduation-cap hidden text-navy-700"></i>
+        </div>
+        <div class="leading-tight">
+          <p class="text-sm font-bold text-white">Sistema Educativo</p>
+          <p class="text-[11px] text-navy-300">Guillermo Paz Andrade</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 space-y-1 px-3 py-4">
+        {menu.map((item) => (
+          <a
+            href={item.href}
+            class={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+              active === item.id
+                ? 'bg-navy-600 text-white'
+                : 'text-navy-200 hover:bg-navy-700 hover:text-white'
+            }`}
+          >
+            <i class={`fa-solid ${item.icon} w-5 text-center`}></i>
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <div class="border-t border-navy-700 px-3 py-4">
+        <a
+          href="/"
+          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-navy-200 transition hover:bg-navy-700 hover:text-white"
+        >
+          <i class="fa-solid fa-right-from-bracket w-5 text-center"></i>
+          Cerrar sesión
+        </a>
+      </div>
+    </aside>
+
+    <!-- Contenido -->
+    <div class="flex flex-1 flex-col">
+      <!-- Topbar -->
+      <header class="flex items-center justify-between border-b border-navy-200 bg-white px-6 py-3.5">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-graduation-cap text-navy-700 md:hidden"></i>
+          <h1 class="text-base font-semibold text-navy-800">
+            <slot name="title">Panel</slot>
+          </h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="hidden text-sm text-navy-600 sm:block">Administrador</span>
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-navy-700 text-sm font-semibold text-white">
+            A
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 p-6">
+        <slot />
+      </main>
+    </div>
+  </div>
+</Layout>

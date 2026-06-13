@@ -3,6 +3,7 @@ node_modules/
 
 # Configuración local de Claude
 .claude/settings.local.json
+.claude/launch.json
 npm-debug.log
 yarn-error.log
 
