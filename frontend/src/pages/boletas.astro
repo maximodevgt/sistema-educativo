@@ -1,0 +1,198 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Boletas · Sistema Educativo" active="boletas">
+  <span slot="title">Boletas</span>
+
+  <!-- Filtros -->
+  <div class="no-print mb-5">
+    <h2 class="mb-1 text-lg font-bold text-navy-800">Boleta de calificaciones</h2>
+    <p class="mb-4 text-sm text-navy-500">Selecciona una sección y un alumno para ver su boleta.</p>
+
+    <div class="grid gap-3 rounded-xl border border-navy-100 bg-white p-4 sm:grid-cols-3">
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Sección</label>
+        <select id="f-seccion" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Alumno</label>
+        <select id="f-alumno" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" disabled>
+          <option value="">Primero elige una sección...</option>
+        </select>
+      </div>
+      <div class="flex items-end">
+        <button id="btn-imprimir" class="flex w-full items-center justify-center gap-2 rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-700 transition hover:bg-navy-50 disabled:opacity-40" disabled>
+          <i class="fa-solid fa-print"></i>
+          Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje inicial -->
+  <div id="mensaje" class="no-print rounded-xl border border-dashed border-navy-200 bg-white px-4 py-16 text-center text-navy-400">
+    <i class="fa-solid fa-file-lines mb-2 text-3xl"></i>
+    <p class="text-sm">Aún no has seleccionado un alumno.</p>
+  </div>
+
+  <!-- Boleta -->
+  <div id="boleta" class="hidden">
+    <div class="mx-auto max-w-3xl rounded-xl border border-navy-100 bg-white p-8 print:border-0 print:shadow-none">
+      <!-- Encabezado -->
+      <div class="mb-6 flex items-center gap-4 border-b border-navy-100 pb-5">
+        <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-navy-50">
+          <img src="/logo.png" alt="Logo" class="h-14 w-14 object-contain"
+            onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+          <i class="fa-solid fa-graduation-cap hidden text-2xl text-navy-700"></i>
+        </div>
+        <div class="text-center flex-1">
+          <h3 class="text-sm font-bold text-navy-800">Escuela Oficial Urbana Mixta No. 1</h3>
+          <p class="text-xs text-navy-600">"Dr. Guillermo Paz Andrade" — Ciudad Tecún Umán</p>
+          <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-navy-500">Boleta de Calificaciones</p>
+        </div>
+      </div>
+
+      <!-- Datos del alumno -->
+      <div class="mb-5 grid grid-cols-2 gap-y-1 text-sm">
+        <p><span class="text-navy-500">Alumno:</span> <b id="b-nombre" class="text-navy-800"></b></p>
+        <p><span class="text-navy-500">Código:</span> <span id="b-codigo" class="font-mono text-navy-700"></span></p>
+        <p><span class="text-navy-500">Grado:</span> <span id="b-grado" class="text-navy-700"></span></p>
+        <p><span class="text-navy-500">Sección:</span> <span id="b-seccion" class="text-navy-700"></span></p>
+      </div>
+
+      <!-- Tabla de notas -->
+      <table class="w-full border-collapse text-sm">
+        <thead>
+          <tr class="bg-navy-700 text-white">
+            <th class="border border-navy-600 px-3 py-2 text-left">Materia</th>
+            <th class="border border-navy-600 px-2 py-2 w-14">I</th>
+            <th class="border border-navy-600 px-2 py-2 w-14">II</th>
+            <th class="border border-navy-600 px-2 py-2 w-14">III</th>
+            <th class="border border-navy-600 px-2 py-2 w-14">IV</th>
+            <th class="border border-navy-600 px-2 py-2 w-20">Prom.</th>
+            <th class="border border-navy-600 px-2 py-2 w-24">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="b-tabla"></tbody>
+        <tfoot>
+          <tr class="bg-navy-50 font-bold text-navy-800">
+            <td class="border border-navy-200 px-3 py-2 text-right" colspan="5">Promedio general</td>
+            <td id="b-promedio" class="border border-navy-200 px-2 py-2 text-center"></td>
+            <td id="b-estado-general" class="border border-navy-200 px-2 py-2 text-center"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p class="mt-4 text-center text-[11px] text-navy-400">
+        Aprobado con <span id="b-minimo"></span> puntos. Promedio sobre las unidades con nota registrada.
+      </p>
+    </div>
+  </div>
+</DashboardLayout>
+
+<style is:global>
+  @media print {
+    aside, header, .no-print { display: none !important; }
+    main { padding: 0 !important; }
+    body { background: #fff !important; }
+  }
+</style>
+
+<script>
+  const API = 'http://localhost:8000/api';
+  const $ = (id) => document.getElementById(id);
+
+  function fmt(n) {
+    if (n === null || n === undefined) return '—';
+    return Number(n).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+  }
+
+  function badge(aprobada) {
+    if (aprobada === null || aprobada === undefined)
+      return '<span class="text-navy-300">—</span>';
+    return aprobada
+      ? '<span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Aprobada</span>'
+      : '<span class="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700">Reprobada</span>';
+  }
+
+  // --- Cargar secciones ---
+  async function cargarSecciones() {
+    const sec = await fetch(`${API}/secciones`).then((r) => r.json());
+    $('f-seccion').innerHTML =
+      '<option value="">Seleccionar...</option>' +
+      sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
+  }
+
+  // --- Al cambiar sección, cargar alumnos ---
+  async function cargarAlumnos() {
+    const seccion = $('f-seccion').value;
+    const selAlumno = $('f-alumno');
+    ocultarBoleta();
+
+    if (!seccion) {
+      selAlumno.innerHTML = '<option value="">Primero elige una sección...</option>';
+      selAlumno.disabled = true;
+      return;
+    }
+
+    const alumnos = await fetch(`${API}/alumnos?seccion_id=${seccion}`).then((r) => r.json());
+    selAlumno.innerHTML =
+      '<option value="">Seleccionar alumno...</option>' +
+      alumnos.map((a) => `<option value="${a.id}">${a.nombre_completo}</option>`).join('');
+    selAlumno.disabled = false;
+  }
+
+  // --- Cargar boleta del alumno ---
+  async function cargarBoleta() {
+    const alumnoId = $('f-alumno').value;
+    if (!alumnoId) { ocultarBoleta(); return; }
+
+    const data = await fetch(`${API}/alumnos/${alumnoId}/boleta`).then((r) => r.json());
+
+    $('b-nombre').textContent = data.alumno.nombre_completo;
+    $('b-codigo').textContent = data.alumno.codigo;
+    $('b-grado').textContent = data.alumno.grado ?? '—';
+    $('b-seccion').textContent = data.alumno.seccion ?? '—';
+    $('b-minimo').textContent = data.aprobado_minimo;
+
+    const tabla = $('b-tabla');
+    tabla.innerHTML = '';
+    for (const m of data.materias) {
+      const fila = document.createElement('tr');
+      fila.className = 'odd:bg-white even:bg-navy-50/40';
+      const celda = (u) => `<td class="border border-navy-200 px-2 py-2 text-center text-navy-700">${m.unidades[u] ? fmt(m.unidades[u].total) : '—'}</td>`;
+      fila.innerHTML = `
+        <td class="border border-navy-200 px-3 py-2 text-navy-800">${m.materia}</td>
+        ${celda(1)}${celda(2)}${celda(3)}${celda(4)}
+        <td class="border border-navy-200 px-2 py-2 text-center font-semibold text-navy-800">${fmt(m.promedio)}</td>
+        <td class="border border-navy-200 px-2 py-2 text-center">${badge(m.aprobada)}</td>`;
+      tabla.appendChild(fila);
+    }
+
+    $('b-promedio').textContent = fmt(data.promedio_general);
+    $('b-estado-general').innerHTML =
+      data.promedio_general === null
+        ? '<span class="text-navy-300">—</span>'
+        : badge(data.promedio_general >= data.aprobado_minimo);
+
+    $('mensaje').classList.add('hidden');
+    $('boleta').classList.remove('hidden');
+    $('btn-imprimir').disabled = false;
+  }
+
+  function ocultarBoleta() {
+    $('boleta').classList.add('hidden');
+    $('mensaje').classList.remove('hidden');
+    $('btn-imprimir').disabled = true;
+  }
+
+  // --- Eventos ---
+  $('f-seccion').addEventListener('change', cargarAlumnos);
+  $('f-alumno').addEventListener('change', cargarBoleta);
+  $('btn-imprimir').addEventListener('click', () => window.print());
+
+  cargarSecciones();
+</script>
