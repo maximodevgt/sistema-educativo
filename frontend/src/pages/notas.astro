@@ -1,0 +1,243 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Notas · Sistema Educativo" active="notas">
+  <span slot="title">Notas</span>
+
+  <div class="mb-6">
+    <h2 class="text-lg font-bold text-navy-800">Ingreso de notas</h2>
+    <p class="text-sm text-navy-500">
+      Selecciona sección, materia y unidad para llenar la planilla.
+      Zona sobre 60, examen sobre 40 — aprueba con 60.
+    </p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mb-5 grid gap-3 rounded-xl border border-navy-100 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Sección</label>
+      <select id="f-seccion" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+        <option value="">Seleccionar...</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Materia</label>
+      <select id="f-materia" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+        <option value="">Seleccionar...</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Unidad</label>
+      <select id="f-unidad" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+        <option value="1">Unidad 1</option>
+        <option value="2">Unidad 2</option>
+        <option value="3">Unidad 3</option>
+        <option value="4">Unidad 4</option>
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button id="btn-cargar" class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+        <i class="fa-solid fa-table-list"></i>
+        Cargar planilla
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensaje inicial -->
+  <div id="mensaje" class="rounded-xl border border-dashed border-navy-200 bg-white px-4 py-16 text-center text-navy-400">
+    <i class="fa-solid fa-clipboard-list mb-2 text-3xl"></i>
+    <p class="text-sm">Elige los filtros y presiona "Cargar planilla".</p>
+  </div>
+
+  <!-- Planilla -->
+  <div id="planilla" class="hidden">
+    <div class="overflow-hidden rounded-xl border border-navy-100 bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Alumno</th>
+            <th class="px-4 py-3 font-semibold w-32">Zona <span class="font-normal text-navy-400">/60</span></th>
+            <th class="px-4 py-3 font-semibold w-32">Examen <span class="font-normal text-navy-400">/40</span></th>
+            <th class="px-4 py-3 font-semibold w-24">Total</th>
+            <th class="px-4 py-3 font-semibold w-32">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-notas" class="divide-y divide-navy-100"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex gap-4 text-sm">
+        <span class="text-navy-600"><i class="fa-solid fa-circle-check mr-1 text-emerald-500"></i> Aprobados: <b id="n-aprobados">0</b></span>
+        <span class="text-navy-600"><i class="fa-solid fa-circle-xmark mr-1 text-rose-500"></i> Reprobados: <b id="n-reprobados">0</b></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="guardado-msg" class="text-sm text-emerald-600"></span>
+        <button id="btn-guardar" class="flex items-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
+          <i class="fa-solid fa-floppy-disk"></i>
+          Guardar notas
+        </button>
+      </div>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  const API = 'http://localhost:8000/api';
+  const $ = (id) => document.getElementById(id);
+
+  const APROBADO = 60;
+  const inputBase = 'w-24 rounded-lg border border-navy-200 px-2 py-1.5 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200';
+
+  // --- Cargar selects ---
+  async function cargarFiltros() {
+    const [sec, mat] = await Promise.all([
+      fetch(`${API}/secciones`).then((r) => r.json()),
+      fetch(`${API}/materias`).then((r) => r.json()),
+    ]);
+    $('f-seccion').innerHTML =
+      '<option value="">Seleccionar...</option>' +
+      sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
+    $('f-materia').innerHTML =
+      '<option value="">Seleccionar...</option>' +
+      mat.map((m) => `<option value="${m.id}">${m.nombre}</option>`).join('');
+  }
+
+  // --- Cargar planilla ---
+  async function cargarPlanilla() {
+    const seccion = $('f-seccion').value;
+    const materia = $('f-materia').value;
+    const unidad = $('f-unidad').value;
+
+    if (!seccion || !materia) {
+      alert('Selecciona sección y materia.');
+      return;
+    }
+
+    const params = new URLSearchParams({ seccion_id: seccion, materia_id: materia, unidad });
+    const alumnos = await fetch(`${API}/notas/planilla?${params}`).then((r) => r.json());
+
+    const tabla = $('tabla-notas');
+    tabla.innerHTML = '';
+
+    if (alumnos.length === 0) {
+      $('mensaje').classList.remove('hidden');
+      $('mensaje').innerHTML = '<i class="fa-solid fa-inbox mb-2 text-3xl"></i><p class="text-sm">Esta sección no tiene alumnos.</p>';
+      $('planilla').classList.add('hidden');
+      return;
+    }
+
+    for (const a of alumnos) {
+      const fila = document.createElement('tr');
+      fila.dataset.id = a.alumno_id;
+      fila.className = 'transition hover:bg-navy-50';
+      fila.innerHTML = `
+        <td class="px-4 py-2.5 font-medium text-navy-800">
+          ${a.nombre_completo}
+          <span class="ml-1 font-mono text-xs text-navy-400">${a.codigo}</span>
+        </td>
+        <td class="px-4 py-2.5">
+          <input type="number" class="zona ${inputBase}" min="0" max="60" step="0.01"
+            value="${a.zona ?? ''}" placeholder="0" />
+        </td>
+        <td class="px-4 py-2.5">
+          <input type="number" class="examen ${inputBase}" min="0" max="40" step="0.01"
+            value="${a.examen ?? ''}" placeholder="0" />
+        </td>
+        <td class="px-4 py-2.5 total font-semibold text-navy-700">—</td>
+        <td class="px-4 py-2.5 estado">—</td>`;
+      tabla.appendChild(fila);
+      actualizarFila(fila);
+    }
+
+    $('mensaje').classList.add('hidden');
+    $('planilla').classList.remove('hidden');
+    actualizarResumen();
+  }
+
+  // --- Calcular total y estado de una fila ---
+  function actualizarFila(fila) {
+    const zona = parseFloat(fila.querySelector('.zona').value);
+    const examen = parseFloat(fila.querySelector('.examen').value);
+    const celdaTotal = fila.querySelector('.total');
+    const celdaEstado = fila.querySelector('.estado');
+
+    const hayDatos = !isNaN(zona) || !isNaN(examen);
+    if (!hayDatos) {
+      celdaTotal.textContent = '—';
+      celdaEstado.innerHTML = '<span class="text-navy-300">—</span>';
+      return;
+    }
+
+    const total = (isNaN(zona) ? 0 : zona) + (isNaN(examen) ? 0 : examen);
+    celdaTotal.textContent = total.toFixed(2).replace(/\.00$/, '');
+
+    if (total >= APROBADO) {
+      celdaEstado.innerHTML = '<span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700"><i class="fa-solid fa-check mr-1"></i>Aprobado</span>';
+    } else {
+      celdaEstado.innerHTML = '<span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700"><i class="fa-solid fa-xmark mr-1"></i>Reprobado</span>';
+    }
+  }
+
+  // --- Resumen de aprobados/reprobados ---
+  function actualizarResumen() {
+    let aprobados = 0, reprobados = 0;
+    for (const fila of $('tabla-notas').querySelectorAll('tr')) {
+      const zona = parseFloat(fila.querySelector('.zona').value);
+      const examen = parseFloat(fila.querySelector('.examen').value);
+      if (isNaN(zona) && isNaN(examen)) continue;
+      const total = (isNaN(zona) ? 0 : zona) + (isNaN(examen) ? 0 : examen);
+      if (total >= APROBADO) aprobados++; else reprobados++;
+    }
+    $('n-aprobados').textContent = aprobados;
+    $('n-reprobados').textContent = reprobados;
+  }
+
+  // --- Guardar planilla ---
+  async function guardar() {
+    const notas = [];
+    for (const fila of $('tabla-notas').querySelectorAll('tr')) {
+      const zona = fila.querySelector('.zona').value;
+      const examen = fila.querySelector('.examen').value;
+      notas.push({
+        alumno_id: Number(fila.dataset.id),
+        zona: zona === '' ? null : Number(zona),
+        examen: examen === '' ? null : Number(examen),
+      });
+    }
+
+    const res = await fetch(`${API}/notas/planilla`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        seccion_id: Number($('f-seccion').value),
+        materia_id: Number($('f-materia').value),
+        unidad: Number($('f-unidad').value),
+        notas,
+      }),
+    });
+
+    const msg = $('guardado-msg');
+    if (res.ok) {
+      const data = await res.json();
+      msg.textContent = '✓ ' + data.mensaje;
+      setTimeout(() => (msg.textContent = ''), 3500);
+    } else {
+      msg.className = 'text-sm text-rose-600';
+      msg.textContent = 'Error al guardar (revisa que las notas no excedan el máximo).';
+    }
+  }
+
+  // --- Eventos ---
+  $('btn-cargar').addEventListener('click', cargarPlanilla);
+  $('btn-guardar').addEventListener('click', guardar);
+  $('tabla-notas').addEventListener('input', (e) => {
+    if (e.target.classList.contains('zona') || e.target.classList.contains('examen')) {
+      actualizarFila(e.target.closest('tr'));
+      actualizarResumen();
+    }
+  });
+
+  cargarFiltros();
+</script>
