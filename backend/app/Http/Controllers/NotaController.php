@@ -14,6 +14,14 @@ class NotaController extends Controller
     /** Zona máxima posible (los otros 40 son el examen). */
     private const ZONA_MAX = 60;
 
+    /** Columnas de zona que se crean automáticamente en cada planilla nueva. */
+    private const ACTIVIDADES_DEFAULT = [
+        ['nombre' => 'Tareas',       'punteo_max' => 15],
+        ['nombre' => 'Trabajos',     'punteo_max' => 15],
+        ['nombre' => 'Actividades',  'punteo_max' => 15],
+        ['nombre' => 'Cuaderno',     'punteo_max' => 15],
+    ];
+
     /**
      * Planilla: actividades (columnas) + alumnos con sus calificaciones y examen.
      */
@@ -24,6 +32,13 @@ class NotaController extends Controller
             'materia_id' => ['required', 'exists:materias,id'],
             'unidad' => ['required', 'integer', 'between:1,4'],
         ]);
+
+        // Si esta planilla aún no tiene actividades, crear las columnas por defecto
+        if (! Actividad::where($datos)->exists()) {
+            foreach (self::ACTIVIDADES_DEFAULT as $def) {
+                Actividad::create($datos + $def);
+            }
+        }
 
         $actividades = Actividad::where($datos)->orderBy('id')->get(['id', 'nombre', 'punteo_max']);
 

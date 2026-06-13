@@ -8,8 +8,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   <div class="mb-6">
     <h2 class="text-lg font-bold text-navy-800">Ingreso de notas</h2>
     <p class="text-sm text-navy-500">
-      Define las actividades de la zona (tareas, trabajos...) y captura el punteo de cada alumno.
-      Zona sobre 60, examen sobre 40 — aprueba con 60.
+      Captura el punteo de cada alumno en Tareas, Trabajos, Actividades y Cuaderno (suman la zona),
+      más el examen. Zona sobre 60, examen sobre 40 — aprueba con 60.
     </p>
   </div>
 
@@ -52,25 +52,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   <!-- Planilla -->
   <div id="planilla" class="hidden">
-    <!-- Gestión de actividades -->
-    <div class="mb-3 flex flex-wrap items-end gap-3 rounded-xl border border-navy-100 bg-white p-4">
-      <div>
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Nueva actividad</label>
-        <input id="act-nombre" type="text" placeholder="Ej. Tareas, Cuaderno..." class="w-48 rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
-      </div>
-      <div>
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Punteo</label>
-        <input id="act-punteo" type="number" min="0" max="60" step="0.01" placeholder="0" class="w-24 rounded-lg border border-navy-200 px-3 py-2 text-sm outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200" />
-      </div>
-      <button id="btn-agregar-act" class="flex items-center gap-2 rounded-lg border border-navy-300 px-4 py-2 text-sm font-semibold text-navy-700 transition hover:bg-navy-50">
-        <i class="fa-solid fa-plus"></i> Agregar actividad
-      </button>
-      <div class="ml-auto text-sm">
-        <span class="text-navy-500">Zona definida:</span>
-        <b id="zona-definida" class="text-navy-800">0</b><span class="text-navy-400">/60</span>
-      </div>
-    </div>
-
     <div class="overflow-x-auto rounded-xl border border-navy-100 bg-white">
       <table class="w-full text-left text-sm">
         <thead class="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
@@ -179,10 +160,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
         <div class="flex flex-col items-center">
           <span>${act.nombre}</span>
           <span class="font-normal text-navy-400">/${fmt(act.punteo_max)}</span>
-          <span class="mt-0.5">
-            <button data-edit-act="${act.id}" class="text-navy-400 hover:text-navy-700" title="Editar"><i class="fa-solid fa-pen text-[10px] pointer-events-none"></i></button>
-            <button data-del-act="${act.id}" class="ml-1 text-rose-400 hover:text-rose-600" title="Eliminar"><i class="fa-solid fa-xmark text-[11px] pointer-events-none"></i></button>
-          </span>
         </div>`;
       cab.insertBefore(th, refZona);
     }
@@ -220,7 +197,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       recomputeRow(a);
     }
 
-    actualizarZonaDefinida();
     actualizarResumen();
   }
 
@@ -254,13 +230,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       : '<span class="rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-700"><i class="fa-solid fa-xmark mr-1"></i>Reprobado</span>';
   }
 
-  function actualizarZonaDefinida() {
-    const total = actividades.reduce((s, a) => s + (a.punteo_max || 0), 0);
-    const el = $('zona-definida');
-    el.textContent = fmt(total);
-    el.className = total === 60 ? 'text-emerald-600' : (total > 60 ? 'text-rose-600' : 'text-navy-800');
-  }
-
   function actualizarResumen() {
     let ap = 0, re = 0;
     for (const a of alumnos) {
@@ -272,53 +241,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     }
     $('n-aprobados').textContent = ap;
     $('n-reprobados').textContent = re;
-  }
-
-  // --- Gestión de actividades ---
-  async function agregarActividad() {
-    const nombre = $('act-nombre').value.trim();
-    const punteo = $('act-punteo').value;
-    if (!nombre || punteo === '') { alert('Escribe nombre y punteo de la actividad.'); return; }
-
-    const res = await fetch(`${API}/actividades`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ ...ctx(), nombre, punteo_max: Number(punteo) }),
-    });
-    if (!res.ok) { alert('No se pudo crear la actividad.'); return; }
-    const act = await res.json();
-
-    actividades.push({ id: act.id, nombre: act.nombre, punteo_max: Number(act.punteo_max) });
-    for (const a of alumnos) a.calificaciones[act.id] = a.calificaciones[act.id] ?? '';
-    $('act-nombre').value = '';
-    $('act-punteo').value = '';
-    render();
-  }
-
-  async function editarActividad(id) {
-    const act = actividades.find((a) => a.id === id);
-    const nombre = prompt('Nombre de la actividad:', act.nombre);
-    if (nombre === null) return;
-    const punteo = prompt('Punteo máximo:', act.punteo_max);
-    if (punteo === null) return;
-
-    const res = await fetch(`${API}/actividades/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ nombre: nombre.trim(), punteo_max: Number(punteo) }),
-    });
-    if (!res.ok) { alert('No se pudo actualizar.'); return; }
-    act.nombre = nombre.trim();
-    act.punteo_max = Number(punteo);
-    render();
-  }
-
-  async function eliminarActividad(id) {
-    if (!confirm('¿Eliminar esta actividad y sus calificaciones?')) return;
-    await fetch(`${API}/actividades/${id}`, { method: 'DELETE' });
-    actividades = actividades.filter((a) => a.id !== id);
-    for (const a of alumnos) delete a.calificaciones[id];
-    render();
   }
 
   // --- Guardar ---
@@ -352,15 +274,6 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   // --- Eventos ---
   $('btn-cargar').addEventListener('click', cargarPlanilla);
   $('btn-guardar').addEventListener('click', guardar);
-  $('btn-agregar-act').addEventListener('click', agregarActividad);
-
-  // edición/eliminación de columnas (delegación en la cabecera)
-  $('cabecera').addEventListener('click', (e) => {
-    const ed = e.target.closest('[data-edit-act]');
-    const del = e.target.closest('[data-del-act]');
-    if (ed) editarActividad(Number(ed.dataset.editAct));
-    if (del) eliminarActividad(Number(del.dataset.delAct));
-  });
 
   // captura de notas (delegación en el cuerpo)
   $('tabla-notas').addEventListener('input', (e) => {
