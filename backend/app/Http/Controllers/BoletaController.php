@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alumno;
+use App\Models\Comportamiento;
 use App\Models\Materia;
 use App\Models\Nota;
 
@@ -60,6 +61,13 @@ class BoletaController extends Controller
             ? round(array_sum($promediosMaterias) / count($promediosMaterias), 2)
             : null;
 
+        // Comportamiento por unidad (1 a 4)
+        $comps = Comportamiento::where('alumno_id', $alumno->id)->get()->keyBy('unidad');
+        $comportamiento = [];
+        for ($u = 1; $u <= 4; $u++) {
+            $comportamiento[$u] = $comps->get($u)?->valoracion;
+        }
+
         return response()->json([
             'alumno' => [
                 'id' => $alumno->id,
@@ -69,6 +77,7 @@ class BoletaController extends Controller
                 'seccion' => $alumno->seccion?->nombre,
             ],
             'materias' => $detalle,
+            'comportamiento' => $comportamiento,
             'promedio_general' => $promedioGeneral,
             'aprobado_minimo' => Nota::APROBADO_MINIMO,
         ]);

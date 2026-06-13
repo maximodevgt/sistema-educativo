@@ -86,6 +86,29 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
         </tfoot>
       </table>
 
+      <!-- Comportamiento -->
+      <div class="mt-5">
+        <h4 class="mb-2 text-xs font-semibold uppercase tracking-wide text-navy-500">Comportamiento</h4>
+        <div class="grid grid-cols-4 gap-2 text-center text-sm">
+          <div class="rounded-lg border border-navy-200 p-2">
+            <p class="text-[11px] text-navy-400">Unidad I</p>
+            <p id="comp-1" class="font-semibold text-navy-700">—</p>
+          </div>
+          <div class="rounded-lg border border-navy-200 p-2">
+            <p class="text-[11px] text-navy-400">Unidad II</p>
+            <p id="comp-2" class="font-semibold text-navy-700">—</p>
+          </div>
+          <div class="rounded-lg border border-navy-200 p-2">
+            <p class="text-[11px] text-navy-400">Unidad III</p>
+            <p id="comp-3" class="font-semibold text-navy-700">—</p>
+          </div>
+          <div class="rounded-lg border border-navy-200 p-2">
+            <p class="text-[11px] text-navy-400">Unidad IV</p>
+            <p id="comp-4" class="font-semibold text-navy-700">—</p>
+          </div>
+        </div>
+      </div>
+
       <p class="mt-4 text-center text-[11px] text-navy-400">
         Aprobado con <span id="b-minimo"></span> puntos. Promedio sobre las unidades con nota registrada.
       </p>
@@ -170,6 +193,11 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
         <td class="border border-navy-200 px-2 py-2 text-center font-semibold text-navy-800">${fmt(m.promedio)}</td>
         <td class="border border-navy-200 px-2 py-2 text-center">${badge(m.aprobada)}</td>`;
       tabla.appendChild(fila);
+    }
+
+    // Comportamiento por unidad
+    for (let u = 1; u <= 4; u++) {
+      $(`comp-${u}`).textContent = data.comportamiento?.[u] ?? '—';
     }
 
     $('b-promedio').textContent = fmt(data.promedio_general);

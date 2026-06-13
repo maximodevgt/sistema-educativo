@@ -12,6 +12,7 @@ class Comportamiento extends Model
     protected $fillable = [
         'alumno_id',
         'unidad',
+        'valoracion',
         'nota',
         'observacion',
     ];

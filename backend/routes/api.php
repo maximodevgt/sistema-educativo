@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\BoletaController;
+use App\Http\Controllers\ComportamientoController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\NotaController;
 use App\Http\Controllers\SeccionController;
@@ -18,6 +19,9 @@ Route::delete('actividades/{actividad}', [ActividadController::class, 'destroy']
 
 Route::get('notas/planilla', [NotaController::class, 'planilla']);
 Route::post('notas/planilla', [NotaController::class, 'guardarPlanilla']);
+
+Route::get('comportamientos/planilla', [ComportamientoController::class, 'planilla']);
+Route::post('comportamientos/planilla', [ComportamientoController::class, 'guardarPlanilla']);
 
 Route::get('alumnos/{alumno}/boleta', [BoletaController::class, 'show']);
 

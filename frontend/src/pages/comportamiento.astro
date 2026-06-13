@@ -1,0 +1,172 @@
+---
+import DashboardLayout from '../layouts/DashboardLayout.astro';
+---
+
+<DashboardLayout title="Comportamiento · Sistema Educativo" active="comportamiento">
+  <span slot="title">Comportamiento</span>
+
+  <div class="mb-6">
+    <h2 class="text-lg font-bold text-navy-800">Registro de comportamiento</h2>
+    <p class="text-sm text-navy-500">
+      Selecciona la sección y la unidad, y marca el nivel de comportamiento de cada alumno.
+    </p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mb-5 grid gap-3 rounded-xl border border-navy-100 bg-white p-4 sm:grid-cols-3">
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Sección</label>
+      <select id="f-seccion" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+        <option value="">Seleccionar...</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-navy-500">Unidad</label>
+      <select id="f-unidad" class="w-full rounded-lg border border-navy-200 px-3 py-2 text-sm text-navy-700 outline-none focus:border-navy-500 focus:ring-2 focus:ring-navy-200">
+        <option value="1">Unidad 1</option>
+        <option value="2">Unidad 2</option>
+        <option value="3">Unidad 3</option>
+        <option value="4">Unidad 4</option>
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button id="btn-cargar" class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+        <i class="fa-solid fa-table-list"></i>
+        Cargar
+      </button>
+    </div>
+  </div>
+
+  <!-- Mensaje inicial -->
+  <div id="mensaje" class="rounded-xl border border-dashed border-navy-200 bg-white px-4 py-16 text-center text-navy-400">
+    <i class="fa-solid fa-star mb-2 text-3xl"></i>
+    <p class="text-sm">Elige sección y unidad, y presiona "Cargar".</p>
+  </div>
+
+  <!-- Planilla -->
+  <div id="planilla" class="hidden">
+    <div class="overflow-hidden rounded-xl border border-navy-100 bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Alumno</th>
+            <th class="px-4 py-3 font-semibold w-72">Comportamiento</th>
+          </tr>
+        </thead>
+        <tbody id="tabla" class="divide-y divide-navy-100"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex items-center justify-end gap-3">
+      <span id="guardado-msg" class="text-sm text-emerald-600"></span>
+      <button id="btn-guardar" class="flex items-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
+        <i class="fa-solid fa-floppy-disk"></i>
+        Guardar
+      </button>
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  const API = 'http://localhost:8000/api';
+  const $ = (id) => document.getElementById(id);
+
+  let niveles = [];
+  let alumnos = [];
+
+  // Color por nivel
+  const COLOR = {
+    'Excelente': 'border-emerald-300 bg-emerald-50 text-emerald-700',
+    'Muy Bueno': 'border-blue-300 bg-blue-50 text-blue-700',
+    'Bueno': 'border-amber-300 bg-amber-50 text-amber-700',
+    'Necesita mejorar': 'border-rose-300 bg-rose-50 text-rose-700',
+  };
+  const base = 'w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy-200';
+
+  function claseSelect(valor) {
+    return `${base} ${COLOR[valor] ?? 'border-navy-200 text-navy-700'}`;
+  }
+
+  async function cargarSecciones() {
+    const sec = await fetch(`${API}/secciones`).then((r) => r.json());
+    $('f-seccion').innerHTML =
+      '<option value="">Seleccionar...</option>' +
+      sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
+  }
+
+  async function cargar() {
+    if (!$('f-seccion').value) { alert('Selecciona una sección.'); return; }
+    const params = new URLSearchParams({ seccion_id: $('f-seccion').value, unidad: $('f-unidad').value });
+    const data = await fetch(`${API}/comportamientos/planilla?${params}`).then((r) => r.json());
+
+    niveles = data.niveles;
+    alumnos = data.alumnos;
+
+    if (alumnos.length === 0) {
+      $('planilla').classList.add('hidden');
+      $('mensaje').classList.remove('hidden');
+      $('mensaje').innerHTML = '<i class="fa-solid fa-inbox mb-2 text-3xl"></i><p class="text-sm">Esta sección no tiene alumnos.</p>';
+      return;
+    }
+
+    const tbody = $('tabla');
+    tbody.innerHTML = '';
+    for (const a of alumnos) {
+      const opciones = '<option value="">— Sin marcar —</option>' +
+        niveles.map((n) => `<option value="${n}" ${a.valoracion === n ? 'selected' : ''}>${n}</option>`).join('');
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-navy-50';
+      tr.innerHTML = `
+        <td class="px-4 py-2.5 font-medium text-navy-800">
+          ${a.nombre_completo}<span class="ml-1 font-mono text-xs text-navy-400">${a.codigo}</span>
+        </td>
+        <td class="px-4 py-2.5">
+          <select class="valoracion ${claseSelect(a.valoracion)}" data-alumno="${a.alumno_id}">${opciones}</select>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+
+    $('mensaje').classList.add('hidden');
+    $('planilla').classList.remove('hidden');
+  }
+
+  async function guardar() {
+    const comportamientos = [...$('tabla').querySelectorAll('select.valoracion')].map((sel) => ({
+      alumno_id: Number(sel.dataset.alumno),
+      valoracion: sel.value || null,
+    }));
+
+    const res = await fetch(`${API}/comportamientos/planilla`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        seccion_id: Number($('f-seccion').value),
+        unidad: Number($('f-unidad').value),
+        comportamientos,
+      }),
+    });
+
+    const msg = $('guardado-msg');
+    if (res.ok) {
+      const data = await res.json();
+      msg.className = 'text-sm text-emerald-600';
+      msg.textContent = '✓ ' + data.mensaje;
+      setTimeout(() => (msg.textContent = ''), 3500);
+    } else {
+      msg.className = 'text-sm text-rose-600';
+      msg.textContent = 'Error al guardar.';
+    }
+  }
+
+  // Recolorear el select al cambiar
+  $('tabla').addEventListener('change', (e) => {
+    if (e.target.classList.contains('valoracion')) {
+      e.target.className = 'valoracion ' + claseSelect(e.target.value);
+    }
+  });
+
+  $('btn-cargar').addEventListener('click', cargar);
+  $('btn-guardar').addEventListener('click', guardar);
+
+  cargarSecciones();
+</script>
