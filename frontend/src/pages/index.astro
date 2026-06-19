@@ -7,14 +7,12 @@ import Layout from '../layouts/Layout.astro';
     <div class="w-full max-w-md">
       <!-- Encabezado / escuela -->
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg">
+        <div class="mx-auto mb-4 h-32 w-32 overflow-hidden rounded-full bg-white shadow-lg">
           <img
             src="/logo.png"
             alt="Logo de la escuela"
             class="h-full w-full object-contain p-1.5"
-            onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');"
           />
-          <i id="logo-fallback" class="fa-solid fa-graduation-cap hidden text-4xl text-navy-700"></i>
         </div>
         <h1 class="text-lg font-bold leading-tight text-white">
           Escuela Oficial Urbana Mixta No. 1
