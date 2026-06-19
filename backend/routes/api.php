@@ -12,8 +12,10 @@ use App\Http\Controllers\SeccionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('grados', [GradoController::class, 'index']);
-Route::get('materias', [MateriaController::class, 'index']);
 
+Route::apiResource('materias', MateriaController::class)
+    ->except('show')
+    ->parameters(['materias' => 'materia']);
 Route::apiResource('secciones', SeccionController::class)
     ->except('show')
     ->parameters(['secciones' => 'seccion']);
