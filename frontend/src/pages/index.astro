@@ -7,11 +7,11 @@ import Layout from '../layouts/Layout.astro';
     <div class="w-full max-w-md">
       <!-- Encabezado / escuela -->
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-lg">
+        <div class="mx-auto mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg">
           <img
             src="/logo.png"
             alt="Logo de la escuela"
-            class="h-20 w-20 object-contain"
+            class="h-full w-full object-contain p-1.5"
             onerror="this.style.display='none'; document.getElementById('logo-fallback').classList.remove('hidden');"
           />
           <i id="logo-fallback" class="fa-solid fa-graduation-cap hidden text-4xl text-navy-700"></i>
@@ -74,6 +74,11 @@ import Layout from '../layouts/Layout.astro';
             </div>
           </div>
 
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-navy-700 select-none">
+            <input id="recordar" type="checkbox" class="h-4 w-4 rounded border-navy-300 text-navy-700 accent-navy-700" />
+            Recordar usuario
+          </label>
+
           <button
             type="submit"
             class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800"
@@ -101,5 +106,20 @@ import Layout from '../layouts/Layout.astro';
     input.type = oculto ? 'text' : 'password';
     icon.classList.toggle('fa-eye', !oculto);
     icon.classList.toggle('fa-eye-slash', oculto);
+  });
+
+  // Recordar usuario: precargar el correo guardado
+  const email = document.getElementById('email');
+  const recordar = document.getElementById('recordar');
+  const guardado = localStorage.getItem('recordar_email');
+  if (guardado) {
+    email.value = guardado;
+    recordar.checked = true;
+  }
+
+  // Al enviar, guardar o limpiar el correo según el check
+  email.form?.addEventListener('submit', () => {
+    if (recordar.checked) localStorage.setItem('recordar_email', email.value);
+    else localStorage.removeItem('recordar_email');
   });
 </script>
