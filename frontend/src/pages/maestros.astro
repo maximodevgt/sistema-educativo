@@ -78,7 +78,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
   const modal = $('modal');
 
@@ -89,7 +90,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   }
 
   async function refrescar() {
-    maestros = await fetch(`${API}/maestros`).then((r) => r.json());
+    maestros = await apiFetch('/maestros').then((r) => r.json());
     $('contador').textContent = maestros.length;
     const tbody = $('tabla');
     tbody.innerHTML = '';
@@ -148,10 +149,9 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       email: $('f-email').value || null,
       telefono: $('f-telefono').value || null,
     };
-    const url = id ? `${API}/maestros/${id}` : `${API}/maestros`;
-    const res = await fetch(url, {
+    const url = id ? `/maestros/${id}` : '/maestros';
+    const res = await apiFetch(url, {
       method: id ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(datos),
     });
     if (res.ok) { cerrarModal(); refrescar(); }
@@ -165,7 +165,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   async function eliminar(id) {
     if (!confirm('¿Eliminar este maestro? Quedará desasignado de sus secciones.')) return;
-    const res = await fetch(`${API}/maestros/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    const res = await apiFetch(`/maestros/${id}`, { method: 'DELETE' });
     if (res.ok) { refrescar(); }
     else { const err = await res.json(); alert(err.message ?? 'No se pudo eliminar.'); }
   }

@@ -27,7 +27,7 @@ import Layout from '../layouts/Layout.astro';
           Iniciar sesión
         </h2>
 
-        <form class="space-y-5" method="get" action="/dashboard">
+        <form id="form-login" class="space-y-5">
           <!-- Correo -->
           <div>
             <label for="email" class="mb-1.5 block text-sm font-medium text-navy-700">
@@ -77,6 +77,8 @@ import Layout from '../layouts/Layout.astro';
             Recordar usuario
           </label>
 
+          <p id="form-error" class="hidden rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700"></p>
+
           <button
             type="submit"
             class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800"
@@ -95,6 +97,11 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
+  import { setSesion, getToken } from '../lib/auth.js';
+
+  // Si ya hay sesión activa, no mostrar el login
+  if (getToken()) window.location.href = '/dashboard';
+
   const btn = document.getElementById('toggle-password');
   const input = document.getElementById('password');
   const icon = document.getElementById('toggle-icon');
@@ -115,9 +122,42 @@ import Layout from '../layouts/Layout.astro';
     recordar.checked = true;
   }
 
-  // Al enviar, guardar o limpiar el correo según el check
-  email.form?.addEventListener('submit', () => {
+  // Iniciar sesión contra la API
+  const form = document.getElementById('form-login');
+  const errorEl = document.getElementById('form-error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.classList.add('hidden');
+
     if (recordar.checked) localStorage.setItem('recordar_email', email.value);
     else localStorage.removeItem('recordar_email');
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    try {
+      const res = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email: email.value, password: input.value }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const msg = data.errors ? Object.values(data.errors).flat().join(' ') : (data.message ?? 'No se pudo iniciar sesión.');
+        errorEl.textContent = msg;
+        errorEl.classList.remove('hidden');
+        if (submitBtn) { submitBtn.disabled = false; }
+        return;
+      }
+
+      const data = await res.json();
+      setSesion(data.token, data.usuario);
+      window.location.href = '/dashboard';
+    } catch {
+      errorEl.textContent = 'No se pudo conectar con el servidor.';
+      errorEl.classList.remove('hidden');
+      if (submitBtn) { submitBtn.disabled = false; }
+    }
   });
 </script>

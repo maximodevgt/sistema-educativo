@@ -18,9 +18,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Usuario administrador inicial
-        User::firstOrCreate(
+        User::updateOrCreate(
             ['email' => 'admin@escuela.edu.gt'],
-            ['name' => 'Administrador', 'password' => bcrypt('password')]
+            ['name' => 'Max Us', 'cargo' => 'Administrador', 'password' => bcrypt('password')]
         );
 
         // Grados de primaria (1° a 6°)

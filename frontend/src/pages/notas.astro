@@ -85,7 +85,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
   const APROBADO = 60;
 
@@ -106,8 +107,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   // --- Cargar selects ---
   async function cargarFiltros() {
     const [sec, mat] = await Promise.all([
-      fetch(`${API}/secciones`).then((r) => r.json()),
-      fetch(`${API}/materias`).then((r) => r.json()),
+      apiFetch('/secciones').then((r) => r.json()),
+      apiFetch('/materias').then((r) => r.json()),
     ]);
     $('f-seccion').innerHTML =
       '<option value="">Seleccionar...</option>' +
@@ -124,7 +125,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       return;
     }
     const params = new URLSearchParams(ctx());
-    const data = await fetch(`${API}/notas/planilla?${params}`).then((r) => r.json());
+    const data = await apiFetch(`/notas/planilla?${params}`).then((r) => r.json());
 
     actividades = data.actividades.map((a) => ({ id: a.id, nombre: a.nombre, punteo_max: Number(a.punteo_max) }));
     alumnos = data.alumnos.map((a) => ({
@@ -253,9 +254,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       ),
     }));
 
-    const res = await fetch(`${API}/notas/planilla`, {
+    const res = await apiFetch('/notas/planilla', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ ...ctx(), notas }),
     });
 

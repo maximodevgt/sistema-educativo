@@ -144,7 +144,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
 
   const $ = (id) => document.getElementById(id);
   const tabla = $('tabla-alumnos');
@@ -165,7 +165,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   // --- Cargar secciones (filtro + formulario) ---
   async function cargarSecciones() {
-    const res = await fetch(`${API}/secciones`);
+    const res = await apiFetch('/secciones');
     secciones = await res.json();
 
     const opciones = secciones
@@ -185,7 +185,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     if ($('buscar').value) params.set('buscar', $('buscar').value);
     if ($('filtro-seccion').value) params.set('seccion_id', $('filtro-seccion').value);
 
-    const res = await fetch(`${API}/alumnos?${params}`);
+    const res = await apiFetch(`/alumnos?${params}`);
     const alumnos = await res.json();
 
     $('cargando').classList.add('hidden');
@@ -273,12 +273,11 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       fecha_nacimiento: $('f-fecha').value || null,
     };
 
-    const url = id ? `${API}/alumnos/${id}` : `${API}/alumnos`;
+    const url = id ? `/alumnos/${id}` : '/alumnos';
     const metodo = id ? 'PUT' : 'POST';
 
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method: metodo,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(datos),
     });
 
@@ -299,7 +298,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   // --- Eliminar ---
   async function eliminar(id) {
     if (!confirm('¿Eliminar este alumno? Esta acción no se puede deshacer.')) return;
-    await fetch(`${API}/alumnos/${id}`, { method: 'DELETE' });
+    await apiFetch(`/alumnos/${id}`, { method: 'DELETE' });
     cargarAlumnos();
   }
 
@@ -319,7 +318,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     if (btn.dataset.accion === 'eliminar') {
       eliminar(id);
     } else if (btn.dataset.accion === 'editar') {
-      const res = await fetch(`${API}/alumnos/${id}`);
+      const res = await apiFetch(`/alumnos/${id}`);
       abrirModal(await res.json());
     }
   });

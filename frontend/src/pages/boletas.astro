@@ -123,7 +123,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </style>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
 
   function fmt(n) {
@@ -141,7 +142,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   // --- Cargar secciones ---
   async function cargarSecciones() {
-    const sec = await fetch(`${API}/secciones`).then((r) => r.json());
+    const sec = await apiFetch('/secciones').then((r) => r.json());
     $('f-seccion').innerHTML =
       '<option value="">Seleccionar...</option>' +
       sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
@@ -159,7 +160,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       return;
     }
 
-    const alumnos = await fetch(`${API}/alumnos?seccion_id=${seccion}`).then((r) => r.json());
+    const alumnos = await apiFetch(`/alumnos?seccion_id=${seccion}`).then((r) => r.json());
     selAlumno.innerHTML =
       '<option value="">Seleccionar alumno...</option>' +
       alumnos.map((a) => `<option value="${a.id}">${a.nombre_completo}</option>`).join('');
@@ -171,7 +172,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     const alumnoId = $('f-alumno').value;
     if (!alumnoId) { ocultarBoleta(); return; }
 
-    const data = await fetch(`${API}/alumnos/${alumnoId}/boleta`).then((r) => r.json());
+    const data = await apiFetch(`/alumnos/${alumnoId}/boleta`).then((r) => r.json());
 
     $('b-nombre').textContent = data.alumno.nombre_completo;
     $('b-codigo').textContent = data.alumno.codigo;

@@ -68,7 +68,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
 
   let niveles = [];
@@ -88,7 +89,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   }
 
   async function cargarSecciones() {
-    const sec = await fetch(`${API}/secciones`).then((r) => r.json());
+    const sec = await apiFetch('/secciones').then((r) => r.json());
     $('f-seccion').innerHTML =
       '<option value="">Seleccionar...</option>' +
       sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
@@ -97,7 +98,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   async function cargar() {
     if (!$('f-seccion').value) { alert('Selecciona una sección.'); return; }
     const params = new URLSearchParams({ seccion_id: $('f-seccion').value, unidad: $('f-unidad').value });
-    const data = await fetch(`${API}/comportamientos/planilla?${params}`).then((r) => r.json());
+    const data = await apiFetch(`/comportamientos/planilla?${params}`).then((r) => r.json());
 
     niveles = data.niveles;
     alumnos = data.alumnos;
@@ -136,9 +137,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       valoracion: sel.value || null,
     }));
 
-    const res = await fetch(`${API}/comportamientos/planilla`, {
+    const res = await apiFetch('/comportamientos/planilla', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
         seccion_id: Number($('f-seccion').value),
         unidad: Number($('f-unidad').value),

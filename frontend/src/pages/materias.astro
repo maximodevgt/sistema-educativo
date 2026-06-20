@@ -62,14 +62,15 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
   const modal = $('modal');
 
   let materias = [];
 
   async function refrescar() {
-    materias = await fetch(`${API}/materias`).then((r) => r.json());
+    materias = await apiFetch('/materias').then((r) => r.json());
     $('contador').textContent = materias.length;
     const tbody = $('tabla');
     tbody.innerHTML = '';
@@ -118,10 +119,9 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     $('form-error').classList.add('hidden');
     const id = $('f-id').value;
     const datos = { nombre: $('f-nombre').value };
-    const url = id ? `${API}/materias/${id}` : `${API}/materias`;
-    const res = await fetch(url, {
+    const url = id ? `/materias/${id}` : '/materias';
+    const res = await apiFetch(url, {
       method: id ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(datos),
     });
     if (res.ok) { cerrarModal(); refrescar(); }
@@ -135,7 +135,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   async function eliminar(id) {
     if (!confirm('¿Eliminar esta materia?')) return;
-    const res = await fetch(`${API}/materias/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    const res = await apiFetch(`/materias/${id}`, { method: 'DELETE' });
     if (res.ok) { refrescar(); }
     else { const err = await res.json(); alert(err.message ?? 'No se pudo eliminar.'); }
   }

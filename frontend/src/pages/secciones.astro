@@ -81,7 +81,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 </DashboardLayout>
 
 <script>
-  const API = 'http://localhost:8000/api';
+  import { apiFetch } from '../lib/auth.js';
+
   const $ = (id) => document.getElementById(id);
   const modal = $('modal');
 
@@ -90,8 +91,8 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   async function cargarCatalogos() {
     [grados, maestros] = await Promise.all([
-      fetch(`${API}/grados`).then((r) => r.json()),
-      fetch(`${API}/maestros`).then((r) => r.json()),
+      apiFetch('/grados').then((r) => r.json()),
+      apiFetch('/maestros').then((r) => r.json()),
     ]);
     $('f-grado').innerHTML =
       '<option value="">Seleccionar...</option>' +
@@ -104,7 +105,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
   // datos en memoria para editar
   let secciones = [];
   async function refrescar() {
-    secciones = await fetch(`${API}/secciones`).then((r) => r.json());
+    secciones = await apiFetch('/secciones').then((r) => r.json());
     pintar();
   }
   function pintar() {
@@ -163,10 +164,9 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       ciclo: Number($('f-ciclo').value),
       maestro_guia_id: $('f-maestro').value ? Number($('f-maestro').value) : null,
     };
-    const url = id ? `${API}/secciones/${id}` : `${API}/secciones`;
-    const res = await fetch(url, {
+    const url = id ? `/secciones/${id}` : '/secciones';
+    const res = await apiFetch(url, {
       method: id ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(datos),
     });
     if (res.ok) { cerrarModal(); refrescar(); }
@@ -180,7 +180,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
   async function eliminar(id) {
     if (!confirm('¿Eliminar esta sección?')) return;
-    const res = await fetch(`${API}/secciones/${id}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    const res = await apiFetch(`/secciones/${id}`, { method: 'DELETE' });
     if (res.ok) { refrescar(); }
     else { const err = await res.json(); alert(err.message ?? 'No se pudo eliminar.'); }
   }
