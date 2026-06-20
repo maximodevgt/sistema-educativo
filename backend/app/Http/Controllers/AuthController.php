@@ -29,12 +29,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
-            'usuario' => [
-                'id' => $usuario->id,
-                'nombre' => $usuario->name,
-                'cargo' => $usuario->cargo,
-                'email' => $usuario->email,
-            ],
+            'usuario' => $this->datosUsuario($usuario),
         ]);
     }
 
@@ -49,13 +44,17 @@ class AuthController extends Controller
     /** Devuelve el usuario autenticado (para validar la sesión). */
     public function me(Request $request)
     {
-        $usuario = $request->user();
+        return response()->json($this->datosUsuario($request->user()));
+    }
 
-        return response()->json([
+    private function datosUsuario(User $usuario): array
+    {
+        return [
             'id' => $usuario->id,
             'nombre' => $usuario->name,
             'cargo' => $usuario->cargo,
             'email' => $usuario->email,
-        ]);
+            'foto_url' => $usuario->foto_url,
+        ];
     }
 }

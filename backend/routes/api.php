@@ -9,6 +9,7 @@ use App\Http\Controllers\GradoController;
 use App\Http\Controllers\MaestroController;
 use App\Http\Controllers\MateriaController;
 use App\Http\Controllers\NotaController;
+use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SeccionController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ Route::get('login', fn () => response()->json(['message' => 'No autenticado.'], 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
+
+    Route::post('perfil/foto', [PerfilController::class, 'subirFoto']);
+    Route::delete('perfil/foto', [PerfilController::class, 'quitarFoto']);
 
     Route::get('grados', [GradoController::class, 'index']);
 

@@ -80,15 +80,31 @@ const menu = [
             <p id="usuario-nombre" class="text-sm font-semibold leading-tight text-navy-800"></p>
             <p id="usuario-cargo" class="text-xs leading-tight text-navy-400"></p>
           </div>
-          <div class="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-navy-700">
-            <span id="usuario-iniciales" class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white"></span>
-            <img
-              id="usuario-foto"
-              src="/perfil.jpg"
-              alt="Foto de perfil"
-              class="absolute inset-0 h-full w-full object-cover"
-              onerror="this.remove()"
-            />
+
+          <div class="relative">
+            <button
+              id="btn-avatar"
+              type="button"
+              title="Cambiar foto de perfil"
+              class="group relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-navy-700"
+            >
+              <span id="usuario-iniciales" class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white"></span>
+              <img id="usuario-foto" alt="Foto de perfil" class="absolute inset-0 hidden h-full w-full object-cover" />
+              <span class="absolute inset-0 hidden items-center justify-center bg-navy-900/50 text-white group-hover:flex">
+                <i class="fa-solid fa-camera text-xs"></i>
+              </span>
+            </button>
+
+            <div id="menu-avatar" class="absolute right-0 top-11 z-20 hidden w-44 overflow-hidden rounded-lg border border-navy-100 bg-white py-1 shadow-lg">
+              <button id="btn-cambiar-foto" type="button" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-navy-700 hover:bg-navy-50">
+                <i class="fa-solid fa-camera w-4 text-center"></i> Cambiar foto
+              </button>
+              <button id="btn-quitar-foto" type="button" class="hidden w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50">
+                <i class="fa-solid fa-trash w-4 text-center"></i> Quitar foto
+              </button>
+            </div>
+
+            <input id="input-foto" type="file" accept="image/*" class="hidden" />
           </div>
         </div>
       </header>
@@ -101,21 +117,78 @@ const menu = [
 </Layout>
 
 <script>
-  import { requireAuth, getUsuario, cerrarSesion } from '../lib/auth.js';
+  import { requireAuth, getUsuario, actualizarUsuario, apiFetch, cerrarSesion } from '../lib/auth.js';
 
   requireAuth();
 
-  const usuario = getUsuario();
-  if (usuario) {
-    document.getElementById('usuario-nombre').textContent = usuario.nombre;
-    document.getElementById('usuario-cargo').textContent = usuario.cargo ?? '';
-    document.getElementById('usuario-iniciales').textContent = usuario.nombre
+  const $ = (id) => document.getElementById(id);
+  const fotoImg = $('usuario-foto');
+  const btnQuitar = $('btn-quitar-foto');
+
+  function pintarUsuario(usuario) {
+    if (!usuario) return;
+
+    $('usuario-nombre').textContent = usuario.nombre;
+    $('usuario-cargo').textContent = usuario.cargo ?? '';
+    $('usuario-iniciales').textContent = usuario.nombre
       .split(' ')
       .slice(0, 2)
       .map((p) => p[0])
       .join('')
       .toUpperCase();
+
+    if (usuario.foto_url) {
+      fotoImg.src = usuario.foto_url;
+      fotoImg.classList.remove('hidden');
+      btnQuitar.classList.remove('hidden');
+      btnQuitar.classList.add('flex');
+    } else {
+      fotoImg.removeAttribute('src');
+      fotoImg.classList.add('hidden');
+      btnQuitar.classList.add('hidden');
+      btnQuitar.classList.remove('flex');
+    }
   }
 
+  pintarUsuario(getUsuario());
+
   document.getElementById('btn-cerrar-sesion')?.addEventListener('click', cerrarSesion);
+
+  // --- Menú de la foto (cambiar / quitar) ---
+  const menu = $('menu-avatar');
+  $('btn-avatar').addEventListener('click', (e) => {
+    e.stopPropagation();
+    menu.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => menu.classList.add('hidden'));
+
+  const inputFoto = $('input-foto');
+  $('btn-cambiar-foto').addEventListener('click', () => {
+    menu.classList.add('hidden');
+    inputFoto.click();
+  });
+
+  inputFoto.addEventListener('change', async () => {
+    const archivo = inputFoto.files[0];
+    if (!archivo) return;
+
+    const datos = new FormData();
+    datos.append('foto', archivo);
+
+    const res = await apiFetch('/perfil/foto', { method: 'POST', body: datos });
+    inputFoto.value = '';
+
+    if (res.ok) {
+      const data = await res.json();
+      pintarUsuario(actualizarUsuario({ foto_url: data.foto_url }));
+    } else {
+      alert('No se pudo subir la foto. Verifica que sea una imagen de menos de 3 MB.');
+    }
+  });
+
+  btnQuitar.addEventListener('click', async () => {
+    menu.classList.add('hidden');
+    await apiFetch('/perfil/foto', { method: 'DELETE' });
+    pintarUsuario(actualizarUsuario({ foto_url: null }));
+  });
 </script>
