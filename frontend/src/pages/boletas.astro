@@ -124,6 +124,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
 <script>
   import { apiFetch } from '../lib/auth.js';
+  import { escapeHtml as esc } from '../lib/html.js';
 
   const $ = (id) => document.getElementById(id);
 
@@ -145,7 +146,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     const sec = await apiFetch('/secciones').then((r) => r.json());
     $('f-seccion').innerHTML =
       '<option value="">Seleccionar...</option>' +
-      sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
+      sec.map((s) => `<option value="${s.id}">${esc(s.grado.nombre)} "${esc(s.nombre)}"</option>`).join('');
   }
 
   // --- Al cambiar sección, cargar alumnos ---
@@ -163,7 +164,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     const alumnos = await apiFetch(`/alumnos?seccion_id=${seccion}`).then((r) => r.json());
     selAlumno.innerHTML =
       '<option value="">Seleccionar alumno...</option>' +
-      alumnos.map((a) => `<option value="${a.id}">${a.nombre_completo}</option>`).join('');
+      alumnos.map((a) => `<option value="${a.id}">${esc(a.nombre_completo)}</option>`).join('');
     selAlumno.disabled = false;
   }
 
@@ -187,7 +188,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       fila.className = 'odd:bg-white even:bg-navy-50/40';
       const celda = (u) => `<td class="border border-navy-200 px-2 py-2 text-center text-navy-700">${m.unidades[u] ? fmt(m.unidades[u].total) : '—'}</td>`;
       fila.innerHTML = `
-        <td class="border border-navy-200 px-3 py-2 text-navy-800">${m.materia}</td>
+        <td class="border border-navy-200 px-3 py-2 text-navy-800">${esc(m.materia)}</td>
         ${celda(1)}${celda(2)}${celda(3)}${celda(4)}
         <td class="border border-navy-200 px-2 py-2 text-center font-semibold text-navy-800">${fmt(m.promedio)}</td>
         <td class="border border-navy-200 px-2 py-2 text-center">${badge(m.aprobada)}</td>`;

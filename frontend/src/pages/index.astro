@@ -97,7 +97,7 @@ import Layout from '../layouts/Layout.astro';
 </Layout>
 
 <script>
-  import { setSesion, getToken } from '../lib/auth.js';
+  import { API, setSesion, getToken } from '../lib/auth.js';
 
   // Si ya hay sesión activa, no mostrar el login
   if (getToken()) window.location.href = '/dashboard';
@@ -136,7 +136,7 @@ import Layout from '../layouts/Layout.astro';
     const submitBtn = form.querySelector('button[type="submit"]');
 
     try {
-      const res = await fetch('http://localhost:8000/api/login', {
+      const res = await fetch(`${API}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ email: email.value, password: input.value }),

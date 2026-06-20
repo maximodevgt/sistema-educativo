@@ -13,7 +13,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\SeccionController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('login', [AuthController::class, 'login']);
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 // Ruta nombrada "login" para que el middleware de autenticación pueda
 // resolver route('login') cuando falta el token, y devuelva 401 en JSON

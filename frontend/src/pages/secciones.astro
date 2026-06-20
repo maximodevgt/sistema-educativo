@@ -82,6 +82,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
 <script>
   import { apiFetch } from '../lib/auth.js';
+  import { escapeHtml as esc } from '../lib/html.js';
 
   const $ = (id) => document.getElementById(id);
   const modal = $('modal');
@@ -96,10 +97,10 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     ]);
     $('f-grado').innerHTML =
       '<option value="">Seleccionar...</option>' +
-      grados.map((g) => `<option value="${g.id}">${g.nombre}</option>`).join('');
+      grados.map((g) => `<option value="${g.id}">${esc(g.nombre)}</option>`).join('');
     $('f-maestro').innerHTML =
       '<option value="">— Sin asignar —</option>' +
-      maestros.map((m) => `<option value="${m.id}">${m.nombres} ${m.apellidos}</option>`).join('');
+      maestros.map((m) => `<option value="${m.id}">${esc(m.nombres)} ${esc(m.apellidos)}</option>`).join('');
   }
 
   // datos en memoria para editar
@@ -115,12 +116,12 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     if (secciones.length === 0) { $('vacio').classList.remove('hidden'); return; }
     $('vacio').classList.add('hidden');
     for (const s of secciones) {
-      const guia = s.maestro_guia ? `${s.maestro_guia.nombres} ${s.maestro_guia.apellidos}` : '<span class="text-navy-300">Sin asignar</span>';
+      const guia = s.maestro_guia ? `${esc(s.maestro_guia.nombres)} ${esc(s.maestro_guia.apellidos)}` : '<span class="text-navy-300">Sin asignar</span>';
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-navy-50';
       tr.innerHTML = `
-        <td class="px-4 py-3 font-medium text-navy-800">${s.grado.nombre}</td>
-        <td class="px-4 py-3"><span class="rounded-md bg-navy-100 px-2 py-0.5 font-semibold text-navy-700">${s.nombre}</span></td>
+        <td class="px-4 py-3 font-medium text-navy-800">${esc(s.grado.nombre)}</td>
+        <td class="px-4 py-3"><span class="rounded-md bg-navy-100 px-2 py-0.5 font-semibold text-navy-700">${esc(s.nombre)}</span></td>
         <td class="px-4 py-3 text-navy-600">${s.ciclo}</td>
         <td class="px-4 py-3 text-navy-600">${guia}</td>
         <td class="px-4 py-3 text-center text-navy-600">${s.alumnos_count}</td>

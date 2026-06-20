@@ -145,6 +145,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
 <script>
   import { apiFetch } from '../lib/auth.js';
+  import { escapeHtml as esc } from '../lib/html.js';
 
   const $ = (id) => document.getElementById(id);
   const tabla = $('tabla-alumnos');
@@ -169,7 +170,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     secciones = await res.json();
 
     const opciones = secciones
-      .map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`)
+      .map((s) => `<option value="${s.id}">${esc(s.grado.nombre)} "${esc(s.nombre)}"</option>`)
       .join('');
 
     $('filtro-seccion').insertAdjacentHTML('beforeend', opciones);
@@ -198,19 +199,19 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     }
 
     for (const a of alumnos) {
-      const grado = a.seccion ? `${a.seccion.grado.nombre} "${a.seccion.nombre}"` : '—';
+      const grado = a.seccion ? `${esc(a.seccion.grado.nombre)} "${esc(a.seccion.nombre)}"` : '—';
       const fila = document.createElement('tr');
       fila.className = 'transition hover:bg-navy-50';
       fila.innerHTML = `
         <td class="px-4 py-3">
           <div class="flex items-center gap-3">
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-navy-700 text-xs font-bold text-white">
-              ${iniciales(a.nombres, a.apellidos)}
+              ${esc(iniciales(a.nombres, a.apellidos))}
             </div>
-            <span class="font-medium text-navy-800">${a.nombre_completo}</span>
+            <span class="font-medium text-navy-800">${esc(a.nombre_completo)}</span>
           </div>
         </td>
-        <td class="px-4 py-3 font-mono text-xs text-navy-500">${a.codigo}</td>
+        <td class="px-4 py-3 font-mono text-xs text-navy-500">${esc(a.codigo)}</td>
         <td class="px-4 py-3 text-navy-600">${grado}</td>
         <td class="px-4 py-3">${badgeSexo(a.sexo)}</td>
         <td class="px-4 py-3 text-navy-600">${a.edad != null ? a.edad + ' años' : '—'}</td>

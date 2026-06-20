@@ -86,6 +86,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
 <script>
   import { apiFetch } from '../lib/auth.js';
+  import { escapeHtml as esc } from '../lib/html.js';
 
   const $ = (id) => document.getElementById(id);
   const APROBADO = 60;
@@ -112,10 +113,10 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
     ]);
     $('f-seccion').innerHTML =
       '<option value="">Seleccionar...</option>' +
-      sec.map((s) => `<option value="${s.id}">${s.grado.nombre} "${s.nombre}"</option>`).join('');
+      sec.map((s) => `<option value="${s.id}">${esc(s.grado.nombre)} "${esc(s.nombre)}"</option>`).join('');
     $('f-materia').innerHTML =
       '<option value="">Seleccionar...</option>' +
-      mat.map((m) => `<option value="${m.id}">${m.nombre}</option>`).join('');
+      mat.map((m) => `<option value="${m.id}">${esc(m.nombre)}</option>`).join('');
   }
 
   // --- Cargar planilla ---
@@ -159,7 +160,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       th.className = 'col-act px-3 py-3 text-center font-semibold';
       th.innerHTML = `
         <div class="flex flex-col items-center">
-          <span>${act.nombre}</span>
+          <span>${esc(act.nombre)}</span>
           <span class="font-normal text-navy-400">/${fmt(act.punteo_max)}</span>
         </div>`;
       cab.insertBefore(th, refZona);
@@ -178,19 +179,19 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
         const val = a.calificaciones[act.id] ?? '';
         celdasAct += `<td class="px-3 py-2 text-center">
           <input type="number" class="cal ${inputCls}" min="0" max="${act.punteo_max}" step="0.01"
-            data-alumno="${a.alumno_id}" data-act="${act.id}" value="${val}" placeholder="0" />
+            data-alumno="${a.alumno_id}" data-act="${act.id}" value="${esc(val)}" placeholder="0" />
         </td>`;
       }
 
       tr.innerHTML = `
         <td class="px-4 py-2.5 font-medium text-navy-800 whitespace-nowrap">
-          ${a.nombre_completo}<span class="ml-1 font-mono text-xs text-navy-400">${a.codigo}</span>
+          ${esc(a.nombre_completo)}<span class="ml-1 font-mono text-xs text-navy-400">${esc(a.codigo)}</span>
         </td>
         ${celdasAct}
         <td id="zona-${a.alumno_id}" class="px-3 py-2 text-center font-semibold text-navy-700">—</td>
         <td class="px-3 py-2 text-center">
           <input type="number" class="examen ${inputCls}" min="0" max="40" step="0.01"
-            data-alumno="${a.alumno_id}" value="${a.examen}" placeholder="0" />
+            data-alumno="${a.alumno_id}" value="${esc(a.examen)}" placeholder="0" />
         </td>
         <td id="total-${a.alumno_id}" class="px-3 py-2 text-center font-semibold text-navy-800">—</td>
         <td id="estado-${a.alumno_id}" class="px-3 py-2 text-center">—</td>`;
