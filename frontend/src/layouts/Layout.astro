@@ -22,3 +22,33 @@ const { title = 'Sistema Educativo' } = Astro.props;
     <slot />
   </body>
 </html>
+
+<script>
+  // Bloquea un botón con spinner por unos segundos (evita doble envío)
+  function bloquearBoton(btn, ms = 2500) {
+    if (!btn || btn.disabled) return;
+    const original = btn.innerHTML;
+    btn.style.minWidth = btn.offsetWidth + 'px';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerHTML = original;
+      btn.style.minWidth = '';
+    }, ms);
+  }
+  window.bloquearBoton = bloquearBoton;
+
+  // Al enviar cualquier formulario: bloquear su botón de envío
+  document.addEventListener(
+    'submit',
+    (e) => bloquearBoton(e.target.querySelector('button[type="submit"]')),
+    true
+  );
+
+  // Botones de acción marcados con data-bloquear (fuera de formularios)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-bloquear]');
+    if (btn) bloquearBoton(btn);
+  });
+</script>

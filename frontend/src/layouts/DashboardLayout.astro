@@ -4,9 +4,25 @@ import Layout from './Layout.astro';
 interface Props {
   title?: string;
   active?: string;
+  usuarioNombre?: string;
+  usuarioCargo?: string;
+  usuarioFoto?: string;
 }
 
-const { title = 'Panel · Sistema Educativo', active = 'inicio' } = Astro.props;
+const {
+  title = 'Panel · Sistema Educativo',
+  active = 'inicio',
+  usuarioNombre = 'Dersi López',
+  usuarioCargo = 'Directora',
+  usuarioFoto = '/perfil.jpg',
+} = Astro.props;
+
+const iniciales = usuarioNombre
+  .split(' ')
+  .slice(0, 2)
+  .map((p) => p[0])
+  .join('')
+  .toUpperCase();
 
 const menu = [
   { id: 'inicio',        label: 'Inicio',         icon: 'fa-house',            href: '/dashboard' },
@@ -76,9 +92,20 @@ const menu = [
           </h1>
         </div>
         <div class="flex items-center gap-3">
-          <span class="hidden text-sm text-navy-600 sm:block">Administrador</span>
-          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-navy-700 text-sm font-semibold text-white">
-            A
+          <div class="hidden text-right sm:block">
+            <p class="text-sm font-semibold leading-tight text-navy-800">{usuarioNombre}</p>
+            <p class="text-xs leading-tight text-navy-400">{usuarioCargo}</p>
+          </div>
+          <div class="relative h-9 w-9 shrink-0 overflow-hidden rounded-full bg-navy-700">
+            <span class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-white">
+              {iniciales}
+            </span>
+            <img
+              src={usuarioFoto}
+              alt={usuarioNombre}
+              class="absolute inset-0 h-full w-full object-cover"
+              onerror="this.remove()"
+            />
           </div>
         </div>
       </header>

@@ -20,3 +20,15 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Feedback de click y estado bloqueado para todos los botones */
+button {
+  transition: transform 0.06s ease;
+}
+button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

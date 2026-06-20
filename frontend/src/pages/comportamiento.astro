@@ -30,7 +30,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
       </select>
     </div>
     <div class="flex items-end">
-      <button id="btn-cargar" class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+      <button id="btn-cargar" data-bloquear class="flex w-full items-center justify-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
         <i class="fa-solid fa-table-list"></i>
         Cargar
       </button>
@@ -59,7 +59,7 @@ import DashboardLayout from '../layouts/DashboardLayout.astro';
 
     <div class="mt-4 flex items-center justify-end gap-3">
       <span id="guardado-msg" class="text-sm text-emerald-600"></span>
-      <button id="btn-guardar" class="flex items-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
+      <button id="btn-guardar" data-bloquear class="flex items-center gap-2 rounded-lg bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
         <i class="fa-solid fa-floppy-disk"></i>
         Guardar
       </button>
